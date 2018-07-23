@@ -1,4 +1,6 @@
 path  =  '/home/raid2/nierula/Documents/OtherProjects/NoselfP3b/Analysis/EEG';
+cd('/home/raid2/nierula/Documents/MATLAB/bbci_public-master/')
+startup_bbci_toolbox()
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%  ============  1) get average signal for included subjects  =============== 
@@ -77,18 +79,18 @@ chan =  epoav.clab;
 figure;
 % xRange = input('Insert the x-Range in []');
 % ax1 = [-200 800 xRange(1) xRange(2)];  % needs to be changed: ax1 = [xMin xMax yMin yMax]
-ax1 = [-200 800 -3 15];  % needs to be changed: ax1 = [xMin xMax yMin yMax]
+ax1 = [-200 600 -5 15];  % needs to be changed: ax1 = [xMin xMax yMin yMax]
 
 for i = 1:length(gridPos)
-    subplot(5,7,gridPos(i));hold on;
-    plot(epoav.t,epoav.x(:,chanind(epoav.clab,chan(i)),1),'k') %% Critical: non-target
+    subplot(5, 7, gridPos(i));hold on;
+    plot(epoav.t,epoav.x(:, i, 1),'k') %% Critical: non-target
     hold on;
     %grid;
-    plot(epoav.t,epoav.x(:,chanind(epoav.clab,chan(i)),2),'r') %% Critical: target
-    plot(epoav.t,epoav.x(:,chanind(epoav.clab,chan(i)),3),'b') %% Control: non-target
-    plot(epoav.t,epoav.x(:,chanind(epoav.clab,chan(i)),4),':k') %% Control: target
-    plot(epoav.t,epoav.x(:,chanind(epoav.clab,chan(i)),5),':r') %% Control: non-target
-    plot(epoav.t,epoav.x(:,chanind(epoav.clab,chan(i)),6),':b') %% Control: target
+    plot(epoav.t,epoav.x(:, i, 2),'r') %% Critical: target
+    plot(epoav.t,epoav.x(:, i, 3),'b') %% Control: non-target
+    plot(epoav.t,epoav.x(:, i, 4),':k') %% Control: target
+    plot(epoav.t,epoav.x(:, i, 5),':r') %% Control: non-target
+    plot(epoav.t,epoav.x(:, i, 6),':b') %% Control: target
     title(chan{i}); axis(ax1);
     if i == 1
         legend(epoav.className);
@@ -113,9 +115,19 @@ epoav.x(:, :, [2 4]) = epoav1.x(:, :, [2 5]);
 epoav.x(:, :, 1) = mean(epoav1.x(:, :, [1 3]), 3); % noGo average between classic and noMove
 epoav.x(:, :, 3) = mean(epoav1.x(:, :, [4 6]), 3); % go average between classic and noMove
 
+% subtracting average - synchMove
+epoav1 = epoav;
+epoav = proc_selectClasses(epoav, {'NoGo classic' 'Go classic' });
+epoav.x = []; epoav.className = {'NoGo difference'  'Go difference'};
+epoav.x(:, :, 1) = epoav1.x(:, :, 1) - epoav1.x(:, :, 2);
+epoav.x(:, :, 2) = epoav1.x(:, :, 3) - epoav1.x(:, :, 4);
+
 % get electrode postitions
 mnt = mnt_setElectrodePositions(epoav.clab);
 
 % plot
 figure;
-plot_scalp(mnt, mean(epoav.x(:,:,1),1), 'CLim', [0 13]);
+for class = 1:2
+    subplot(1, 2, class)
+    plot_scalp(mnt, mean(epoav.x(:, :, class),1), 'CLim', [0 1.5]); title(epoav.className(class));
+end
